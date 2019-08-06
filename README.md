@@ -6,8 +6,6 @@ Propel helps you start prepl servers in a few configurations. It won't suit ever
 
 Copying and modification of the source code to fit your needs is encouraged, as opposed to adding every possible flag and feature to Propel. Think of this like a set of minimal examples that are also executable.
 
-[![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/A0A510RXZ)
-
 ## Prepl?
 
 The name comes from *p*rogrammable REPL and it's built Clojure and ClojureScript 1.10+.
