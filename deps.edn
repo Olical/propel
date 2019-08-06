@@ -4,4 +4,5 @@
   org.clojure/spec.alpha {:mvn/version "0.2.176"}
   expound {:mvn/version "0.7.2"}
   cli-matic {:mvn/version "0.3.8"}
-  com.bhauman/rebel-readline {:mvn/version "0.1.4"}}}
+  com.bhauman/rebel-readline {:mvn/version "0.1.4"}
+  com.bhauman/figwheel-main {:mvn/version "0.2.3"}}}

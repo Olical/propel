@@ -5,11 +5,13 @@
             [rebel-readline.core :as rebel]
             [rebel-readline.clojure.main :as rebel-clojure]
             [rebel-readline.clojure.line-reader :as rebel-line-reader]
-            [rebel-readline.clojure.service.local :as rebel-local-service])
+            [rebel-readline.clojure.service.local :as rebel-local-service]
+            [figwheel.main.api :as fig])
   (:import [java.net ServerSocket]))
 
 ;; TODO Tidy up how defaults work.
 ;; TODO Wrap functions in spec with expound printing.
+;; TODO Lazy load all ClojureScript stuff.
 
 (defn- free-port
   "Find a free port we can bind to."
@@ -32,6 +34,23 @@
     (clojure/repl
       :prompt noop
       :read (rebel-clojure/create-repl-read))))
+
+;; Eventual figwheel code...
+; (defn -main []
+;   (figwheel.main.api/start
+;     {:id "dev"
+;      :options {:main 'pfig.test}
+;      :config {:watch-dirs ["src"]
+;               :mode :serve}})
+
+;   (println "=== START PREPL")
+;   (server/start-server {:accept 'cljs.core.server/io-prepl
+;                         :address "127.0.0.1"
+;                         :port 6776
+;                         :name "pfig"
+;                         :args [:repl-env (fig/repl-env "dev")]})
+
+;   (fig/cljs-repl "dev"))
 
 (defn start-prepl
   "Start a prepl server."

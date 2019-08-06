@@ -10,7 +10,7 @@
   (println "Clojure" (clojure-version))
 
   (let [{:keys [address env port port-file? port-file-name]}
-        (propel/prepl {:port-file? true})]
+        (propel/start-prepl {:port-file? true})]
 
     (println "Started" env "prepl at" (str address ":" port))
 
