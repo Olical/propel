@@ -62,18 +62,20 @@
 
 (defn start-prepl
   "Start a prepl server."
-  [{:keys [port address env port-file? port-file-name] :as opts}]
+  [{:keys [port env port-file? port-file-name]
+    :or {address "127.0.0.1"
+         port-file-name ".prepl-port"
+         env :jvm}
+    :as opts}]
+
   (when-not (s/valid? ::prepl-opts opts)
     (throw (IllegalArgumentException.
              (ex-info "Failed to start-prepl, invalid arguments."
                       {:human (exp/expound-str ::prepl-opts opts)
                        :computer (s/explain-data ::prepl-opts opts)}))))
 
-  (let [env (or env :jvm)
-        port-file-name (or port-file-name ".prepl-port")
-        opts (merge opts
-                    {:env env
-                     :accept (case env
+  (let [opts (merge opts
+                    {:accept (case env
                                :jvm 'clojure.core.server/io-prepl
                                :node 'cljs.server.node/prepl
                                :rhino 'cljs.server.rhino/prepl
@@ -81,9 +83,7 @@
                                :graaljs 'cljs.server.graaljs/prepl
                                :nashorn 'cljs.server.nashorn/prepl)
                      :name (str (gensym "propel-server-"))
-                     :port (or port (free-port))
-                     :address (or address "127.0.0.1")
-                     :port-file-name port-file-name})]
+                     :port (or port (free-port))})]
 
     (when port-file?
       (spit port-file-name (:port opts)))
@@ -91,5 +91,5 @@
     (doto opts (server/start-server))))
 
 (comment
-  (prepl {:env :jvm, :port 6666, :port-file? true})
+  (start-prepl {})
   (server/stop-servers))
