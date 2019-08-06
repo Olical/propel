@@ -2,15 +2,15 @@
   "Tools to start prepl servers in various configurations."
   (:require [clojure.core.server :as server]
             [clojure.main :as clojure]
+            [clojure.spec.alpha :as s]
+            [expound.alpha :as exp]
             [rebel-readline.core :as rebel]
             [rebel-readline.clojure.main :as rebel-clojure]
             [rebel-readline.clojure.line-reader :as rebel-line-reader]
             [rebel-readline.clojure.service.local :as rebel-local-service]
-            [figwheel.main.api :as fig])
+            #_[figwheel.main.api :as fig])
   (:import [java.net ServerSocket]))
 
-;; TODO Tidy up how defaults work.
-;; TODO Wrap functions in spec with expound printing.
 ;; TODO Lazy load all ClojureScript stuff.
 
 (defn- free-port
@@ -52,9 +52,23 @@
 
 ;   (fig/cljs-repl "dev"))
 
+(s/def ::env #{:jvm :node :rhino :browser :graaljs :nashorn})
+(s/def ::port integer?)
+(s/def ::address string?)
+(s/def ::port-file? boolean?)
+(s/def ::port-file-name string?)
+(s/def ::prepl-opts
+  (s/keys :opt-un [::env ::port ::address ::port-file? ::port-file-name]))
+
 (defn start-prepl
   "Start a prepl server."
   [{:keys [port address env port-file? port-file-name] :as opts}]
+  (when-not (s/valid? ::prepl-opts opts)
+    (throw (IllegalArgumentException.
+             (ex-info "Failed to start-prepl, invalid arguments."
+                      {:human (exp/expound-str ::prepl-opts opts)
+                       :computer (s/explain-data ::prepl-opts opts)}))))
+
   (let [env (or env :jvm)
         port-file-name (or port-file-name ".prepl-port")
         opts (merge opts
