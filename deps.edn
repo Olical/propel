@@ -1,4 +1,7 @@
 {:deps
  {org.clojure/clojure {:mvn/version "1.10.1"}
   org.clojure/clojurescript {:mvn/version "1.10.520"}
+  org.clojure/spec.alpha {:mvn/version "0.2.176"}
+  expound {:mvn/version "0.7.2"}
+  cli-matic {:mvn/version "0.3.8"}
   com.bhauman/rebel-readline {:mvn/version "0.1.4"}}}
