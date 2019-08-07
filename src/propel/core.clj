@@ -43,11 +43,10 @@
 
 (defn- enrich-opts
   "Assign default values and infer configuration for starting a prepl."
-  [{:keys [env] :as opts}]
+  [{:keys [env port] :as opts}]
   (let [env (or env :jvm)]
     (merge {:name (str (gensym "propel-server-"))
             :address "127.0.0.1"
-            :port (free-port)
             :port-file? false
             :port-file-name ".prepl-port"
             :env env
@@ -60,6 +59,8 @@
                       :graaljs 'cljs.server.graaljs/prepl
                       :nashorn 'cljs.server.nashorn/prepl
                       :figwheel 'cljs.core.server/io-prepl)}
+           (when-not port
+             {:port (free-port)})
            (when (= env :figwheel)
              {:figwheel-build "propel"})
            opts)))
@@ -92,6 +93,4 @@
   [{:keys [env figwheel-build]}]
   (case env
     :jvm (clojure/main)
-    :figwheel (fig :cljs-repl figwheel-build)
-    ;; TODO Other ClojureScript REPLs.
-    ))
+    :figwheel (fig :cljs-repl figwheel-build)))
