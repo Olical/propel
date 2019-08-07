@@ -1,18 +1,10 @@
 (ns propel.core
   "Tools to start prepl servers in various configurations."
   (:require [clojure.core.server :as server]
-            [clojure.main :as clojure]
             [clojure.spec.alpha :as s]
             [expound.alpha :as exp]
-            [rebel-readline.core :as rebel]
-            [rebel-readline.clojure.main :as rebel-clojure]
-            [rebel-readline.clojure.line-reader :as rebel-line-reader]
-            [rebel-readline.clojure.service.local :as rebel-local-service]
             #_[figwheel.main.api :as fig])
-  (:import [java.net ServerSocket]
-           [clojure.lang ExceptionInfo]))
-
-;; TODO Lazy load all ClojureScript stuff.
+  (:import [java.net ServerSocket]))
 
 (defn- free-port
   "Find a free port we can bind to."
@@ -20,33 +12,6 @@
   (let [socket (ServerSocket. 0)]
     (.close socket)
     (.getLocalPort socket)))
-
-(defn- noop
-  "A function that does nothing."
-  []
-  nil)
-
-(defn repl
-  "Start a rebel-readline REPL, falls back to a regular REPL."
-  []
-  (rebel/with-line-reader
-    (rebel-line-reader/create
-      (rebel-local-service/create))
-    (clojure/repl
-      :prompt noop
-      :read (rebel-clojure/create-repl-read)))
-
-  (try
-    (rebel/with-readline-in
-      (rebel-line-reader/create
-        (rebel-local-service/create))
-      (clojure/repl :prompt noop))
-    (catch ExceptionInfo e
-      (if (-> e ex-data :type (= :rebel-readline.jline-api/bad-terminal))
-        (do
-          (println (.getMessage e))
-          (clojure/repl))
-        (throw e)))))
 
 ;; Eventual figwheel code...
 ; (defn -main []
@@ -77,13 +42,22 @@
   "Assign default values and infer configuration for starting a prepl."
   [{:keys [address port-file-name env port]
     :as opts}]
-  (merge opts
-         {:address (or address "127.0.0.1")
-          :port (or port (free-port))
-          :port-file-name (or port-file-name ".prepl-port")
-          :env (or env :jvm)}))
+  (let [env (or env :jvm)]
+    (merge opts
+           {:address (or address "127.0.0.1")
+            :port (or port (free-port))
+            :port-file-name (or port-file-name ".prepl-port")
+            :env env
+            :accept (case env
+                      :jvm 'clojure.core.server/io-prepl
+                      :node 'cljs.server.node/prepl
+                      :rhino 'cljs.server.rhino/prepl
+                      :browser 'cljs.server.browser/prepl
+                      :graaljs 'cljs.server.graaljs/prepl
+                      :nashorn 'cljs.server.nashorn/prepl)
+            :name (str (gensym "propel-server-"))})))
 
-(defn start-prepl
+(defn start-prepl!
   "Start a prepl server."
   [opts]
 
@@ -93,22 +67,11 @@
                       {:human (exp/expound-str ::opts opts)
                        :computer (s/explain-data ::opts opts)}))))
 
-  (let [{:keys [env port-file? port-file-name] :as opts} (enrich-opts opts)
-        opts (merge opts
-                    {:accept (case env
-                               :jvm 'clojure.core.server/io-prepl
-                               :node 'cljs.server.node/prepl
-                               :rhino 'cljs.server.rhino/prepl
-                               :browser 'cljs.server.browser/prepl
-                               :graaljs 'cljs.server.graaljs/prepl
-                               :nashorn 'cljs.server.nashorn/prepl)
-                     :name (str (gensym "propel-server-"))})]
-
+  (let [{:keys [port-file? port-file-name] :as opts} (enrich-opts opts)]
     (when port-file?
       (spit port-file-name (:port opts)))
-
     (doto opts (server/start-server))))
 
 (comment
-  (start-prepl {})
+  (start-prepl! {})
   (server/stop-servers))
