@@ -70,24 +70,31 @@
 (s/def ::address string?)
 (s/def ::port-file? boolean?)
 (s/def ::port-file-name string?)
-(s/def ::prepl-opts
+(s/def ::opts
   (s/keys :opt-un [::env ::port ::address ::port-file? ::port-file-name]))
+
+(defn- enrich-opts
+  "Assign default values and infer configuration for starting a prepl."
+  [{:keys [address port-file-name env port]
+    :as opts}]
+  (merge opts
+         {:address (or address "127.0.0.1")
+          :port (or port (free-port))
+          :port-file-name (or port-file-name ".prepl-port")
+          :env (or env :jvm)}))
 
 (defn start-prepl
   "Start a prepl server."
-  [{:keys [port address env port-file? port-file-name]
-    :or {address "127.0.0.1"
-         port-file-name ".prepl-port"
-         env :jvm}
-    :as opts}]
+  [opts]
 
-  (when-not (s/valid? ::prepl-opts opts)
+  (when-not (s/valid? ::opts opts)
     (throw (IllegalArgumentException.
              (ex-info "Failed to start-prepl, invalid arguments."
-                      {:human (exp/expound-str ::prepl-opts opts)
-                       :computer (s/explain-data ::prepl-opts opts)}))))
+                      {:human (exp/expound-str ::opts opts)
+                       :computer (s/explain-data ::opts opts)}))))
 
-  (let [opts (merge opts
+  (let [{:keys [env port-file? port-file-name] :as opts} (enrich-opts opts)
+        opts (merge opts
                     {:accept (case env
                                :jvm 'clojure.core.server/io-prepl
                                :node 'cljs.server.node/prepl
@@ -95,8 +102,7 @@
                                :browser 'cljs.server.browser/prepl
                                :graaljs 'cljs.server.graaljs/prepl
                                :nashorn 'cljs.server.nashorn/prepl)
-                     :name (str (gensym "propel-server-"))
-                     :port (or port (free-port))})]
+                     :name (str (gensym "propel-server-"))})]
 
     (when port-file?
       (spit port-file-name (:port opts)))
