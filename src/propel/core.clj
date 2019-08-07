@@ -40,7 +40,7 @@
     (rebel/with-readline-in
       (rebel-line-reader/create
         (rebel-local-service/create))
-      (clojure/repl :prompt (fn[])))
+      (clojure/repl :prompt noop))
     (catch ExceptionInfo e
       (if (-> e ex-data :type (= :rebel-readline.jline-api/bad-terminal))
         (do
