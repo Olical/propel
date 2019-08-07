@@ -3,10 +3,7 @@
   (:require [clojure.core.server :as server]
             [clojure.spec.alpha :as s]
             [clojure.main :as clojure]
-            [expound.alpha :as exp]
-
-            ;; TODO Lazy require figwheel.
-            [figwheel.main.api :as fig])
+            [expound.alpha :as exp])
   (:import [java.net ServerSocket]))
 
 (s/def ::env #{:jvm :node :rhino :browser :graaljs :nashorn :figwheel})
@@ -37,6 +34,12 @@
   (let [socket (ServerSocket. 0)]
     (.close socket)
     (.getLocalPort socket)))
+
+(defn- fig
+  "Ensure figwheel.main.api is required and execute the function named by the keyword."
+  [f-name & args]
+  (require 'figwheel.main.api)
+  (apply (resolve (symbol "figwheel.main.api" (name f-name))) args))
 
 (defn- enrich-opts
   "Assign default values and infer configuration for starting a prepl."
@@ -76,11 +79,11 @@
       (spit port-file-name (:port opts)))
 
     (when figwheel?
-      (fig/start {:mode :serve} figwheel-build))
+      (fig :start {:mode :serve} figwheel-build))
 
     (server/start-server
       (cond-> opts
-        figwheel? (update :args into [:repl-env (fig/repl-env figwheel-build)])))
+        figwheel? (update :args into [:repl-env (fig :repl-env figwheel-build)])))
 
     opts))
 
@@ -89,6 +92,6 @@
   [{:keys [env figwheel-build]}]
   (case env
     :jvm (clojure/main)
-    :figwheel (fig/cljs-repl figwheel-build)
+    :figwheel (fig :cljs-repl figwheel-build)
     ;; TODO Other ClojureScript REPLs.
     ))
