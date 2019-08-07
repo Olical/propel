@@ -1,3 +1,2 @@
 {:conns {:dev {:port #slurp-edn ".prepl-port"}
-         :figwheel {:port #slurp-edn ".figwheel-prepl-port"
-                    :lang :cljs}}}
+         :figwheel {:port #slurp-edn ".figwheel-prepl-port", :lang :cljs}}}

@@ -18,9 +18,6 @@
   (let [{:keys [address env port port-file? port-file-name] :as opts}
         (try
           (propel/start-prepl! {:port-file? true})
-          (propel/start-prepl! {:port-file? true
-                                :port-file-name ".figwheel-prepl-port"
-                                :env :figwheel})
           (catch IllegalArgumentException e
             (let [cause (.getCause e)]
               (die
