@@ -4,9 +4,12 @@
 
 ;; TODO Add CLI argument parsing.
 
+(defn- log [& msg]
+  (apply println "[Propel]" msg))
+
 (defn- die [& msg]
   (binding [*out* *err*]
-    (println "Error:" (apply str msg)))
+    (log "Error:" (apply str msg)))
   (System/exit 1))
 
 (defn -main
@@ -14,7 +17,9 @@
   []
   (let [{:keys [address env port port-file? port-file-name] :as opts}
         (try
-          (propel/start-prepl! {#_#_:port-file? true
+          (propel/start-prepl! {:port-file? true})
+          (propel/start-prepl! {:port-file? true
+                                :port-file-name ".figwheel-prepl-port"
                                 :env :figwheel})
           (catch IllegalArgumentException e
             (let [cause (.getCause e)]
@@ -22,8 +27,9 @@
                 (str (.getMessage cause) "\n\n")
                 (:human (ex-data cause))))))]
 
-    (println "Propel started a" env "prepl at" (str address ":" port)
-             (when port-file?
-               (str "(written to \"" port-file-name "\")")))
+    (log "Started a" env "prepl at"
+         (str address ":" port
+              (when port-file?
+                (str " (written to \"" port-file-name "\")"))))
 
     (propel/repl opts)))

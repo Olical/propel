@@ -68,22 +68,21 @@
 
   (let [{:keys [env port-file? port-file-name figwheel-build]
          :as opts} (enrich-opts opts)
-        figwheel? (= env :figwheel)
-        opts (cond-> opts
-               figwheel? (update :args into
-                                 [:repl-env (fig/repl-env figwheel-build)]))]
+        figwheel? (= env :figwheel)]
 
     (validate! ::opts opts "Failed to start-prepl, internal configuration error.")
-
-    (when figwheel?
-      ;; TODO Will want :mode :serve and then figwheel-build under :id 
-      ;; So it goes into the background.
-      (fig/start figwheel-build))
 
     (when port-file?
       (spit port-file-name (:port opts)))
 
-    (doto opts (server/start-server))))
+    (when figwheel?
+      (fig/start {:mode :serve} figwheel-build))
+
+    (server/start-server
+      (cond-> opts
+        figwheel? (update :args into [:repl-env (fig/repl-env figwheel-build)])))
+
+    opts))
 
 (defn repl
   "Starts a REPL connected to your selected environment."

@@ -4,4 +4,4 @@ out/
 target/
 nashorn_code_cache/
 .rebel_readline_history
-.prepl-port
+.*prepl-port
