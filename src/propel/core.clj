@@ -40,13 +40,12 @@
 
 (defn- enrich-opts
   "Assign default values and infer configuration for starting a prepl."
-  [{:keys [address port-file-name env port]
-    :as opts}]
+  [{:keys [env] :as opts}]
   (let [env (or env :jvm)]
-    (merge opts
-           {:address (or address "127.0.0.1")
-            :port (or port (free-port))
-            :port-file-name (or port-file-name ".prepl-port")
+    (merge {:address "127.0.0.1"
+            :port (free-port)
+            :port-file? false
+            :port-file-name ".prepl-port"
             :env env
             :accept (case env
                       :jvm 'clojure.core.server/io-prepl
@@ -55,7 +54,8 @@
                       :browser 'cljs.server.browser/prepl
                       :graaljs 'cljs.server.graaljs/prepl
                       :nashorn 'cljs.server.nashorn/prepl)
-            :name (str (gensym "propel-server-"))})))
+            :name (str (gensym "propel-server-"))}
+           opts)))
 
 (defn start-prepl!
   "Start a prepl server."
