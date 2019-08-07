@@ -9,7 +9,8 @@
             [rebel-readline.clojure.line-reader :as rebel-line-reader]
             [rebel-readline.clojure.service.local :as rebel-local-service]
             #_[figwheel.main.api :as fig])
-  (:import [java.net ServerSocket]))
+  (:import [java.net ServerSocket]
+           [clojure.lang ExceptionInfo]))
 
 ;; TODO Lazy load all ClojureScript stuff.
 
@@ -25,15 +26,27 @@
   []
   nil)
 
-(defn start-rebel-readline
-  "Start a rebel-readline REPL."
+(defn repl
+  "Start a rebel-readline REPL, falls back to a regular REPL."
   []
   (rebel/with-line-reader
     (rebel-line-reader/create
       (rebel-local-service/create))
     (clojure/repl
       :prompt noop
-      :read (rebel-clojure/create-repl-read))))
+      :read (rebel-clojure/create-repl-read)))
+
+  (try
+    (rebel/with-readline-in
+      (rebel-line-reader/create
+        (rebel-local-service/create))
+      (clojure/repl :prompt (fn[])))
+    (catch ExceptionInfo e
+      (if (-> e ex-data :type (= :rebel-readline.jline-api/bad-terminal))
+        (do
+          (println (.getMessage e))
+          (clojure/repl))
+        (throw e)))))
 
 ;; Eventual figwheel code...
 ; (defn -main []
@@ -62,7 +75,7 @@
 
 (defn start-prepl
   "Start a prepl server."
-  [{:keys [port env port-file? port-file-name]
+  [{:keys [port address env port-file? port-file-name]
     :or {address "127.0.0.1"
          port-file-name ".prepl-port"
          env :jvm}

@@ -28,4 +28,4 @@
     (when port-file?
       (println "Port written to" port-file-name)))
 
-  (propel/start-rebel-readline))
+  (propel/repl))
