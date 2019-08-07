@@ -3,4 +3,4 @@
 set -e
 set -x
 
-clojure -m propel.main
+clojure -A:dev -m propel.main

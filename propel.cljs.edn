@@ -1,0 +1,2 @@
+^{:watch-dirs ["test/cljs"]}
+{:main foo.bar}

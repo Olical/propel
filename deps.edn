@@ -1,7 +1,12 @@
-{:deps
+{:paths ["src"]
+
+ :deps
  {org.clojure/clojure {:mvn/version "1.10.1"}
   org.clojure/clojurescript {:mvn/version "1.10.520"}
   org.clojure/spec.alpha {:mvn/version "0.2.176"}
   expound {:mvn/version "0.7.2"}
   cli-matic {:mvn/version "0.3.8"}
-  com.bhauman/figwheel-main {:mvn/version "0.2.3"}}}
+  com.bhauman/figwheel-main {:mvn/version "0.2.3"}}
+ 
+ :aliases
+ {:dev {:extra-paths ["test/cljs" "target"]}}}
