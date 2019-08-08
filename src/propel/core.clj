@@ -2,12 +2,7 @@
   "Tools to start prepl servers in various configurations."
   (:require [clojure.core.server :as server]
             [clojure.spec.alpha :as s]
-            [clojure.main :as clojure]
-            [expound.alpha :as exp]
-
-            ;; TODO Build a generic lazy load fn/macro for this.
-            [cljs.repl :as cljs]
-            [cljs.server.node :as server-node])
+            [clojure.main :as clojure])
   (:import [java.net ServerSocket]))
 
 (s/def ::env #{:jvm :node :rhino :browser :graaljs :nashorn :figwheel})
@@ -19,9 +14,16 @@
 (s/def ::accept symbol?)
 (s/def ::args vector?)
 (s/def ::figwheel-build string?)
+(s/def ::figwheel-opts map?)
 (s/def ::opts
   (s/keys :opt-un [::env ::port ::address ::port-file? ::port-file-name
                    ::name ::accept ::args ::figwheel-build]))
+
+(defn- lapply
+  "Require the namespace of the symbol then apply the var with the args."
+  [sym & args]
+  (require (symbol (namespace sym)))
+  (apply (resolve sym) args))
 
 (defn- validate!
   "Validate some data against a spec, throw with message when invalid."
@@ -29,7 +31,7 @@
   (when-not (s/valid? spec x)
     (throw (IllegalArgumentException.
              (ex-info msg
-                      {:human (exp/expound-str spec x)
+                      {:human (lapply 'expound.alpha/expound-str spec x)
                        :computer (s/explain-data spec x)})))))
 
 (defn- free-port
@@ -38,12 +40,6 @@
   (let [socket (ServerSocket. 0)]
     (.close socket)
     (.getLocalPort socket)))
-
-(defn- fig
-  "Ensure figwheel.main.api is required and execute the function named by the keyword."
-  [f-name & args]
-  (require 'figwheel.main.api)
-  (apply (resolve (symbol "figwheel.main.api" (name f-name))) args))
 
 (defn- enrich-opts
   "Assign default values and infer configuration for starting a prepl."
@@ -56,8 +52,8 @@
             :env env
             :args []
             :accept (case env
-                      :jvm 'server/io-prepl
-                      :node 'server-node/prepl
+                      :jvm 'clojure.core.server/io-prepl
+                      :node 'cljs.server.node/prepl
                       :rhino 'cljs.server.rhino/prepl
                       :browser 'cljs.server.browser/prepl
                       :graaljs 'cljs.server.graaljs/prepl
@@ -66,7 +62,8 @@
            (when-not port
              {:port (free-port)})
            (when (= env :figwheel)
-             {:figwheel-build "propel"})
+             {:figwheel-build "propel"
+              :figwheel-opts {:mode :serve}})
            opts)))
 
 (defn start-prepl!
@@ -74,7 +71,7 @@
   [opts]
   (validate! ::opts opts "Failed to start-prepl, provided invalid arguments.")
 
-  (let [{:keys [env port-file? port-file-name figwheel-build]
+  (let [{:keys [env port-file? port-file-name figwheel-build figwheel-opts]
          :as opts} (enrich-opts opts)
         figwheel? (= env :figwheel)]
 
@@ -84,11 +81,13 @@
       (spit port-file-name (:port opts)))
 
     (when figwheel?
-      (fig :start {:mode :serve} figwheel-build))
+      (lapply 'figwheel.main.api/start figwheel-opts figwheel-build))
 
     (server/start-server
       (cond-> opts
-        figwheel? (update :args into [:repl-env (fig :repl-env figwheel-build)])))
+        figwheel? (update :args into
+                          [:repl-env (lapply 'figwheel.api.main/repl-env
+                                             figwheel-build)])))
 
     opts))
 
@@ -98,12 +97,10 @@
     server-name :name}]
   (case env
     :jvm (clojure/main)
-    :figwheel (fig :cljs-repl figwheel-build)
+    :figwheel (lapply 'figwheel.api.main/cljs-repl figwheel-build)
 
     ;; TODO Rest of the envs.
-    :node (cljs/repl (first (server-node/get-envs {:server-name server-name
-                                                   :port (free-port)})))))
-
-(comment
-  (start-prepl! {:env :node :port 6565})
-  (server/stop-servers))
+    :node (lapply 'cljs.repl/repl
+                  (first (lapply 'cljs.server.node/get-envs
+                                 {:server-name server-name
+                                  :port (free-port)})))))
