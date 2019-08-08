@@ -29,7 +29,8 @@
                       (-> opts
                           (set/rename-keys {:write-port-file :port-file?})
                           (cond->
-                            extra (merge (edn/read-string extra))))))))
+                            extra (-> (merge (edn/read-string extra))
+                                      (dissoc :extra))))))))
 
 (defn -main
   "Allows you to easily start a single prepl then drop into a rebel-readline REPL."

@@ -1,3 +1,0 @@
-;; This is a test config for figwheel usage.
-^{:watch-dirs ["test/cljs"]}
-{:main foo.bar}

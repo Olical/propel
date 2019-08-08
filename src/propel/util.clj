@@ -25,10 +25,14 @@
     (require ns-sym)
     (apply (resolve (symbol (name ns-sym) (name sym))) args)))
 
-(defn free-port
+(defn ^:dynamic free-port
   "Find a free port we can bind to."
   []
   (let [socket (ServerSocket. 0)]
     (.close socket)
     (.getLocalPort socket)))
 
+(defn ^:dynamic unique-name
+  "Generates a unique prefixed name string with a label."
+  [label]
+  (str (gensym (str "propel-" label "-"))))
