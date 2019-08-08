@@ -10,7 +10,6 @@
 
  :aliases
  {:dev {:extra-paths ["test/cljs" "target"]}
-  :test {:extra-paths ["test"]
-         :extra-deps {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
-                                                 :sha "209b64504cb3bd3b99ecfec7937b358a879f55c1"}}
-         :main-opts ["-m" "cognitect.test-runner"]}}}
+  :test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-529"}
+                      lambdaisland/kaocha-junit-xml {:mvn/version "0.0-70"}
+                      lambdaisland/kaocha-cloverage {:mvn/version "0.0-32"}}}}}
