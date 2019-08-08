@@ -1,4 +1,6 @@
-# Propel (Work in Progress!)
+> Work in progress!
+
+# Propel [![CircleCI](https://circleci.com/gh/Olical/propel.svg?style=svg)](https://circleci.com/gh/Olical/propel) [![codecov](https://codecov.io/gh/Olical/propel/branch/master/graph/badge.svg)](https://codecov.io/gh/Olical/propel)
 
 Starting a prepl server in [Clojure][] (or [ClojureScript][]) may not be the hardest thing in the world, but it's always nice to have some simple defaults within easy reach.
 
