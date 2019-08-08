@@ -3,4 +3,4 @@
 set -e
 set -x
 
-clj -A:dev -m propel.main
+clj -A:dev -m propel.main -w "$@"

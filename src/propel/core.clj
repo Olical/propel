@@ -7,12 +7,12 @@
 
 (defn- enrich-opts
   "Assign default values and infer configuration for starting a prepl."
-  [{:keys [env port] :as opts}]
+  [{:keys [env port port-file-name] :as opts}]
   (let [env (or env :jvm)
         server-name (str (gensym "propel-server-"))]
     (merge {:name server-name
             :address "127.0.0.1"
-            :port-file? false
+            :port-file? (boolean port-file-name)
             :port-file-name ".prepl-port"
             :env env
             :args (if (contains? #{:node :browser} env)
