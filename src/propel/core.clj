@@ -86,7 +86,7 @@
     (server/start-server
       (cond-> opts
         figwheel? (update :args into
-                          [:repl-env (lapply 'figwheel.api.main/repl-env
+                          [:repl-env (lapply 'figwheel.main.api/repl-env
                                              figwheel-build)])))
 
     opts))
@@ -97,7 +97,7 @@
     server-name :name}]
   (case env
     :jvm (clojure/main)
-    :figwheel (lapply 'figwheel.api.main/cljs-repl figwheel-build)
+    :figwheel (lapply 'figwheel.main.api/cljs-repl figwheel-build)
 
     ;; TODO Rest of the envs.
     :node (lapply 'cljs.repl/repl
