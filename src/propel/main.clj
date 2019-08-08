@@ -4,12 +4,9 @@
 
 ;; TODO Add CLI argument parsing.
 
-(defn- log [& msg]
-  (apply println "[Propel]" msg))
-
 (defn- die [& msg]
   (binding [*out* *err*]
-    (log "Error:" (apply str msg)))
+    (propel/log "Error:" (apply str msg)))
   (System/exit 1))
 
 (defn -main
@@ -24,9 +21,9 @@
                 (str (.getMessage cause) "\n\n")
                 (:human (ex-data cause))))))]
 
-    (log "Started a" env "prepl at"
-         (str address ":" port
-              (when port-file?
-                (str " (written to \"" port-file-name "\")"))))
+    (propel/log "Started a" env "prepl at"
+                (str address ":" port
+                     (when port-file?
+                       (str " (written to \"" port-file-name "\")"))))
 
     (propel/repl opts)))

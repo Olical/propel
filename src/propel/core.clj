@@ -5,7 +5,7 @@
             [clojure.core.server :as server])
   (:import [java.net ServerSocket]))
 
-(s/def ::env #{:jvm :node :rhino :browser :graaljs :nashorn :figwheel})
+(s/def ::env #{:jvm :node :browser :figwheel :rhino :graaljs :nashorn})
 (s/def ::port integer?)
 (s/def ::address string?)
 (s/def ::port-file? boolean?)
@@ -19,11 +19,15 @@
   (s/keys :opt-un [::env ::port ::address ::port-file? ::port-file-name
                    ::name ::accept ::args ::figwheel-build ::figwheel-opts]))
 
+(defn log [& msg]
+  (apply println "[Propel]" msg))
+
 (def ^:private alias->ns
   '{exp expound.alpha
     cljs cljs.repl
     fig figwheel.main.api
-    node cljs.server.node})
+    node cljs.server.node
+    browser cljs.server.browser})
 
 (defn- lapply
   "Require the namespace of the symbol then apply the var with the args."
@@ -59,17 +63,18 @@
             :port-file? false
             :port-file-name ".prepl-port"
             :env env
-            :args (case env
-                    :node [{:env-opts {:server-name server-name, :port (free-port)}}]
+            :args (if (contains? #{:node :browser} env)
+                    ;; Prevents port conflicts and used to find the repl-env later.
+                    [{:env-opts {:server-name server-name, :port (free-port)}}]
                     [])
             :accept (case env
                       :jvm 'clojure.core.server/io-prepl
                       :node 'cljs.server.node/prepl
-                      :rhino 'cljs.server.rhino/prepl
                       :browser 'cljs.server.browser/prepl
+                      :figwheel 'cljs.core.server/io-prepl
+                      :rhino 'cljs.server.rhino/prepl
                       :graaljs 'cljs.server.graaljs/prepl
-                      :nashorn 'cljs.server.nashorn/prepl
-                      :figwheel 'cljs.core.server/io-prepl)}
+                      :nashorn 'cljs.server.nashorn/prepl)}
 
            (when-not port
              {:port (free-port)})
@@ -112,5 +117,14 @@
     :jvm (clojure/main)
     :figwheel (lapply 'fig/cljs-repl figwheel-build)
 
-    ;; TODO Rest of the envs.
-    :node (lapply 'cljs/repl (first (lapply 'node/get-envs (:env-opts (first args)))))))
+    ;; This is pretty magic, could probably be less magic.
+    ;; The whole world of connecting REPLs to ClojureScript environments is pretty...
+    ;; Uh... yeah, it's interesting. I'm surprised I even got some of them working really.
+    (:node :browser)
+    (lapply 'cljs/repl
+            (first (lapply (symbol (name env) "get-envs")
+                           (:env-opts (first args)))))
+
+    (do
+      (log "No REPL configured for env" env "falling back to regular Clojure JVM REPL.")
+      (clojure/main))))
