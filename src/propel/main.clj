@@ -17,7 +17,7 @@
   []
   (let [{:keys [address env port port-file? port-file-name] :as opts}
         (try
-          (propel/start-prepl! {:port-file? true})
+          (propel/start-prepl! {:port-file? true, :env :node})
           (catch IllegalArgumentException e
             (let [cause (.getCause e)]
               (die

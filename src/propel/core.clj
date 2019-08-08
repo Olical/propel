@@ -3,7 +3,11 @@
   (:require [clojure.core.server :as server]
             [clojure.spec.alpha :as s]
             [clojure.main :as clojure]
-            [expound.alpha :as exp])
+            [expound.alpha :as exp]
+
+            ;; TODO Build a generic lazy load fn/macro for this.
+            [cljs.repl :as cljs]
+            [cljs.server.node :as server-node])
   (:import [java.net ServerSocket]))
 
 (s/def ::env #{:jvm :node :rhino :browser :graaljs :nashorn :figwheel})
@@ -52,8 +56,8 @@
             :env env
             :args []
             :accept (case env
-                      :jvm 'clojure.core.server/io-prepl
-                      :node 'cljs.server.node/prepl
+                      :jvm 'server/io-prepl
+                      :node 'server-node/prepl
                       :rhino 'cljs.server.rhino/prepl
                       :browser 'cljs.server.browser/prepl
                       :graaljs 'cljs.server.graaljs/prepl
@@ -90,7 +94,16 @@
 
 (defn repl
   "Starts a REPL connected to your selected environment."
-  [{:keys [env figwheel-build]}]
+  [{:keys [env figwheel-build]
+    server-name :name}]
   (case env
     :jvm (clojure/main)
-    :figwheel (fig :cljs-repl figwheel-build)))
+    :figwheel (fig :cljs-repl figwheel-build)
+
+    ;; TODO Rest of the envs.
+    :node (cljs/repl (first (server-node/get-envs {:server-name server-name
+                                                   :port (free-port)})))))
+
+(comment
+  (start-prepl! {:env :node :port 6565})
+  (server/stop-servers))
