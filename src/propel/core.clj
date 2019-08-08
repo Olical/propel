@@ -1,8 +1,8 @@
 (ns propel.core
   "Tools to start prepl servers in various configurations."
-  (:require [clojure.core.server :as server]
+  (:require [clojure.main :as clojure]
             [clojure.spec.alpha :as s]
-            [clojure.main :as clojure])
+            [clojure.core.server :as server])
   (:import [java.net ServerSocket]))
 
 (s/def ::env #{:jvm :node :rhino :browser :graaljs :nashorn :figwheel})
