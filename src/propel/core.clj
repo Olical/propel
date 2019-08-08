@@ -17,7 +17,7 @@
 (s/def ::figwheel-opts map?)
 (s/def ::opts
   (s/keys :opt-un [::env ::port ::address ::port-file? ::port-file-name
-                   ::name ::accept ::args ::figwheel-build]))
+                   ::name ::accept ::args ::figwheel-build ::figwheel-opts]))
 
 (defn- lapply
   "Require the namespace of the symbol then apply the var with the args."
@@ -100,6 +100,7 @@
     :figwheel (lapply 'figwheel.main.api/cljs-repl figwheel-build)
 
     ;; TODO Rest of the envs.
+    ;; TODO The node one needs to _share_ REPL env, need to do this in args.
     :node (lapply 'cljs.repl/repl
                   (first (lapply 'cljs.server.node/get-envs
                                  {:server-name server-name
