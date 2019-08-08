@@ -19,11 +19,19 @@
   (s/keys :opt-un [::env ::port ::address ::port-file? ::port-file-name
                    ::name ::accept ::args ::figwheel-build ::figwheel-opts]))
 
+(def ^:private alias->ns
+  '{exp expound.alpha
+    cljs cljs.repl
+    fig figwheel.main.api
+    node cljs.server.node})
+
 (defn- lapply
   "Require the namespace of the symbol then apply the var with the args."
   [sym & args]
-  (require (symbol (namespace sym)))
-  (apply (resolve sym) args))
+  (let [ns-sym (as-> (symbol (namespace sym)) ns-sym
+                 (get alias->ns ns-sym ns-sym))]
+    (require ns-sym)
+    (apply (resolve (symbol (name ns-sym) (name sym))) args)))
 
 (defn- validate!
   "Validate some data against a spec, throw with message when invalid."
@@ -31,7 +39,7 @@
   (when-not (s/valid? spec x)
     (throw (IllegalArgumentException.
              (ex-info msg
-                      {:human (lapply 'expound.alpha/expound-str spec x)
+                      {:human (lapply 'exp/expound-str spec x)
                        :computer (s/explain-data spec x)})))))
 
 (defn- free-port
@@ -87,13 +95,13 @@
       (spit port-file-name (:port opts)))
 
     (when figwheel?
-      (lapply 'figwheel.main.api/start figwheel-opts figwheel-build))
+      (lapply 'fig/start figwheel-opts figwheel-build))
 
     (server/start-server
       (cond-> opts
         figwheel? (update :args into
                           ;; This can't be done in enrich-opts because the server needs to be started first.
-                          [:repl-env (lapply 'figwheel.main.api/repl-env figwheel-build)])))
+                          [:repl-env (lapply 'fig/repl-env figwheel-build)])))
 
     opts))
 
@@ -102,9 +110,7 @@
   [{:keys [env figwheel-build args]}]
   (case env
     :jvm (clojure/main)
-    :figwheel (lapply 'figwheel.main.api/cljs-repl figwheel-build)
+    :figwheel (lapply 'fig/cljs-repl figwheel-build)
 
     ;; TODO Rest of the envs.
-    :node (lapply 'cljs.repl/repl
-                  (first (lapply 'cljs.server.node/get-envs
-                                 (:env-opts (first args)))))))
+    :node (lapply 'cljs/repl (first (lapply 'node/get-envs (:env-opts (first args)))))))

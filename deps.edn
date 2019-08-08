@@ -7,6 +7,6 @@
   expound {:mvn/version "0.7.2"}
   cli-matic {:mvn/version "0.3.8"}
   com.bhauman/figwheel-main {:mvn/version "0.2.3"}}
- 
+
  :aliases
  {:dev {:extra-paths ["test/cljs" "target"]}}}
