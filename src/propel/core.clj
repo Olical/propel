@@ -44,13 +44,16 @@
 (defn- enrich-opts
   "Assign default values and infer configuration for starting a prepl."
   [{:keys [env port] :as opts}]
-  (let [env (or env :jvm)]
-    (merge {:name (str (gensym "propel-server-"))
+  (let [env (or env :jvm)
+        server-name (str (gensym "propel-server-"))]
+    (merge {:name server-name
             :address "127.0.0.1"
             :port-file? false
             :port-file-name ".prepl-port"
             :env env
-            :args []
+            :args (case env
+                    :node [{:env-opts {:server-name server-name, :port (free-port)}}]
+                    [])
             :accept (case env
                       :jvm 'clojure.core.server/io-prepl
                       :node 'cljs.server.node/prepl
@@ -59,11 +62,14 @@
                       :graaljs 'cljs.server.graaljs/prepl
                       :nashorn 'cljs.server.nashorn/prepl
                       :figwheel 'cljs.core.server/io-prepl)}
+
            (when-not port
              {:port (free-port)})
+
            (when (= env :figwheel)
              {:figwheel-build "propel"
               :figwheel-opts {:mode :serve}})
+
            opts)))
 
 (defn start-prepl!
@@ -86,22 +92,19 @@
     (server/start-server
       (cond-> opts
         figwheel? (update :args into
-                          [:repl-env (lapply 'figwheel.main.api/repl-env
-                                             figwheel-build)])))
+                          ;; This can't be done in enrich-opts because the server needs to be started first.
+                          [:repl-env (lapply 'figwheel.main.api/repl-env figwheel-build)])))
 
     opts))
 
 (defn repl
   "Starts a REPL connected to your selected environment."
-  [{:keys [env figwheel-build]
-    server-name :name}]
+  [{:keys [env figwheel-build args]}]
   (case env
     :jvm (clojure/main)
     :figwheel (lapply 'figwheel.main.api/cljs-repl figwheel-build)
 
     ;; TODO Rest of the envs.
-    ;; TODO The node one needs to _share_ REPL env, need to do this in args.
     :node (lapply 'cljs.repl/repl
                   (first (lapply 'cljs.server.node/get-envs
-                                 {:server-name server-name
-                                  :port (free-port)})))))
+                                 (:env-opts (first args)))))))
