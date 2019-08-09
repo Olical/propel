@@ -2,13 +2,15 @@
 
 Propel helps you start [Clojure][] and [ClojureScript][] REPLs with a prepl.
 
-It consists of a simple command line interface (`propel.main`) as well as a set of utility functions (`propel.core`) that you can execute from your own `*.main` namespace.
+It consists of a simple command line interface (`propel.main`) as well as a couple of utility functions (`propel.core`) that you can execute from your own `*.main` namespace.
 
 ```bash
 $ clj --main propel.main --write-port-file
 [Propel] Started a :jvm prepl at 127.0.0.1:33979 (written to ".prepl-port")
 Clojure 1.10.1
-user=> 
+user=>
+
+# ---
 
 $ clj --main propel.main --help
   -p, --port PORT             Port number, defaults to random open port
@@ -61,10 +63,10 @@ $ nc localhost 45297
 
 > We can safely ignore the warning, it's ClojureScript specific and something to do with the compiler context not being shared. So it _thinks_ that var doesn't exist but it does, if you execute `(declare hello)` the warning would go away, the code still works fine with the warning.
 
-You can specify a port or Propel can write the port it selected to a file, `.prepl-port` by default.
+You can specify a port or Propel can write the random port to a file, `.prepl-port` by default.
 
 ```bash
-# Write to the default path.
+# Write to the default file.
 $ clj -m propel.main -w
 
 # Select a file name, also enables writing the file.
@@ -153,7 +155,7 @@ $ nvim src/foo/bar.clj
 
 After a couple of seconds Conjure will be connected to your Propel REPL and you'll have evaluation, autocompletion, documentation lookup and go to definition.
 
-This applies to all of the other `env` values mentioned above, feel free to connect it to `node`, `browser` or `figwheel` too!
+This applies to all of the other `env` values mentioned above, feel free to connect it to `node`, `browser` or `figwheel` too! Just be sure to specify `:lang :cljs` in your `.conjure.edn` next to the `:port` if you want a connection to work with ClojureScript as opposed to Clojure (the default).
 
 ## What's a prepl?
 
