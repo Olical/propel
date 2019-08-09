@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+set -e
+set -x
+
+clojure -Spom && xmllint --format pom.xml -o pom.xml
