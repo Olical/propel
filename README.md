@@ -112,6 +112,16 @@ Here's a fairly exhaustive example of the options map, `start-prepl!` and `repl`
 
 ### Figwheel
 
+#### Lein (legacy)
+
+For those of you still using the [lein-figwheel][] plugin, you may execute something like the following to have figwheel start up from your `project.clj` configuration. Everything should be inferred and should start up as if you typed `lein figwheel` but with a prepl connected.
+
+```bash
+$ clj -m propel.main -e lein-figwheel
+```
+
+#### Main
+
 You can start a [figwheel][] prepl and REPL just like any other environment through the functions or CLI. The only thing you have to bear in mind is that figwheel-main requires you to create a configuration file, I highly recommend you have a read through the documentation.
 
 The name of the file should be the name of the build suffixed with `.cljs.edn`, so by default Propel will configure figwheel to look for `propel.cljs.edn`, which could look like this.
@@ -194,3 +204,4 @@ Find the full [unlicense][] in the `UNLICENSE` file, but here's a snippet.
 [neovim]: https://neovim.io/
 [clojars]: https://clojars.org/
 [figwheel]: https://github.com/bhauman/lein-figwheel
+[lein-figwheel]: https://github.com/bhauman/lein-figwheel

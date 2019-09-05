@@ -14,6 +14,7 @@
   '{exp expound.alpha
     cljs cljs.repl
     fig figwheel.main.api
+    lfig figwheel-sidecar.repl-api
     node cljs.server.node
     browser cljs.server.browser})
 

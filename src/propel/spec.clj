@@ -12,7 +12,7 @@
                       {:human (util/lapply 'exp/expound-str spec x)
                        :computer (s/explain-data spec x)})))))
 
-(s/def ::env #{:jvm :node :browser :figwheel :rhino :graaljs :nashorn})
+(s/def ::env #{:jvm :node :browser :figwheel :lein-figwheel :rhino :graaljs :nashorn})
 (s/def ::port integer?)
 (s/def ::address string?)
 (s/def ::port-file? boolean?)

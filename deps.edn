@@ -6,6 +6,7 @@
   org.clojure/spec.alpha {:mvn/version "0.2.176"}
   org.clojure/tools.cli {:mvn/version "0.4.2"}
   com.bhauman/figwheel-main {:mvn/version "0.2.3"}
+  figwheel-sidecar {:mvn/version "0.5.18"}
   expound {:mvn/version "0.7.2"}}
 
  :aliases

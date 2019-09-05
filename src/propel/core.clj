@@ -24,6 +24,7 @@
                       :node 'cljs.server.node/prepl
                       :browser 'cljs.server.browser/prepl
                       :figwheel 'cljs.core.server/io-prepl
+                      :lein-figwheel 'cljs.core.server/io-prepl
                       :rhino 'cljs.server.rhino/prepl
                       :graaljs 'cljs.server.graaljs/prepl
                       :nashorn 'cljs.server.nashorn/prepl)}
@@ -35,6 +36,9 @@
              {:figwheel-build "propel"
               :figwheel-opts {:mode :serve}})
 
+           (when (= env :lein-figwheel)
+             {:figwheel-build "propel"})
+
            opts)))
 
 (defn start-prepl!
@@ -43,22 +47,27 @@
   (spec/validate! ::spec/opts opts "Failed to start-prepl, provided invalid arguments.")
 
   (let [{:keys [env port-file? port-file-name figwheel-build figwheel-opts]
-         :as opts} (enrich-opts opts)
-        figwheel? (= env :figwheel)]
+         :as opts} (enrich-opts opts)]
 
     (spec/validate! ::spec/opts opts "Failed to start-prepl, internal configuration error.")
 
     (when port-file?
       (spit port-file-name (:port opts)))
 
-    (when figwheel?
+    (when (= env :figwheel)
       (util/lapply 'fig/start figwheel-opts figwheel-build))
 
+    (when (= env :lein-figwheel)
+      (util/lapply 'lfig/start-figwheel!))
+
     (server/start-server
+      ;; This can't be done in enrich-opts because the servers needs to be started first.
       (cond-> opts
-        figwheel? (update :args into
-                          ;; This can't be done in enrich-opts because the server needs to be started first.
-                          [:repl-env (util/lapply 'fig/repl-env figwheel-build)])))
+        (= env :figwheel)
+        (update :args into [:repl-env (util/lapply 'fig/repl-env figwheel-build)])
+
+        (= env :lein-figwheel)
+        (update :args into [:repl-env (util/lapply 'lfig/repl-env)])))
 
     opts))
 
@@ -68,6 +77,7 @@
   (case env
     :jvm (clojure/main)
     :figwheel (util/lapply 'fig/cljs-repl figwheel-build)
+    :lein-figwheel (util/lapply 'lfig/cljs-repl)
 
     ;; This is pretty magic, could probably be less magic.
     ;; The whole world of connecting REPLs to ClojureScript environments is pretty...
