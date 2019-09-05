@@ -29,10 +29,10 @@ You can install Propel from [Clojars][], just add the appropriate coordinate to 
 
 ```edn
 ;; deps.edn
-olical/propel {:mvn/version "1.0.0"}
+olical/propel {:mvn/version "1.1.0"}
 
 ;; project.clj
-[olical/propel "1.0.0"]
+[olical/propel "1.1.0"]
 ```
 
 ## Usage
