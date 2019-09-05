@@ -17,8 +17,8 @@ $ clj --main propel.main --help
   -a, --address ADDRESS       Address for the server, defaults to 127.0.0.1
   -f, --port-file-name FILE   File to write the port to, defaults to .prepl-port
   -w, --[no-]write-port-file  Write the port file? Use of --port-file-name implies true, defaults to false
-  -e, --env ENV               What REPL to start ([jvm], node, browser, figwheel, rhino, graaljs or nashorn)
-  -b, --figwheel-build BUILD  Build to use when using the figwheel env, defaults to propel
+  -e, --env ENV               What REPL to start ([jvm], node, browser, figwheel, lein-figwheel, rhino, graaljs or nashorn)
+  -b, --figwheel-build BUILD  Build to use when using the figwheel env (not lein-fighweel), defaults to propel
   -x, --extra EDN             Extra options map you want merged in, you can get creative with this one
   -h, --help                  Print this help
 ```
