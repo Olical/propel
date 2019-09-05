@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>olical</groupId>
   <artifactId>propel</artifactId>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
   <name>propel</name>
   <description> Propel helps you start Clojure(Script) REPLs with a prepl.</description>
   <url>https://github.com/Olical/propel</url>
@@ -41,6 +41,11 @@
       <groupId>com.bhauman</groupId>
       <artifactId>figwheel-main</artifactId>
       <version>0.2.3</version>
+    </dependency>
+    <dependency>
+      <groupId>figwheel-sidecar</groupId>
+      <artifactId>figwheel-sidecar</artifactId>
+      <version>0.5.18</version>
     </dependency>
     <dependency>
       <groupId>expound</groupId>
