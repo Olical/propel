@@ -2,8 +2,12 @@
   "Tools to start prepl servers in various configurations."
   (:require [clojure.main :as clojure]
             [clojure.core.server :as server]
+            [clojure.pprint :as pprint]
+            [clojure.java.io :as io]
+            [clojure.core.async :as a]
             [propel.spec :as spec]
-            [propel.util :as util]))
+            [propel.util :as util])
+  (:import [java.io PipedInputStream PipedOutputStream]))
 
 (defn- enrich-opts
   "Assign default values and infer configuration for starting a prepl."
@@ -16,8 +20,8 @@
             :port-file-name ".prepl-port"
             :env env
             :args (if (contains? #{:node :browser} env)
-                    ;; Prevents port conflicts and used to find the repl-env later.
-                    [{:env-opts {:server-name server-name, :port (util/free-port)}}]
+                    ;; Prevents port clashes in ClojureScript prepls.
+                    [{:env-opts {:port (util/free-port)}}]
                     [])
             :accept (case env
                       :jvm 'clojure.core.server/io-prepl
@@ -35,9 +39,6 @@
            (when (= env :figwheel)
              {:figwheel-build "propel"
               :figwheel-opts {:mode :serve}})
-
-           (when (= env :lein-figwheel)
-             {:figwheel-build "propel"})
 
            opts)))
 
@@ -71,22 +72,80 @@
 
     opts))
 
+(defn- write
+  "Write the full data to the stream and then flush the stream."
+  [stream data]
+  (doto stream
+    (.write data 0 (count data))
+    (.flush)))
+
 (defn repl
-  "Starts a REPL connected to your selected environment."
-  [{:keys [env figwheel-build args]}]
-  (case env
-    :jvm (clojure/main)
-    :figwheel (util/lapply 'fig/cljs-repl figwheel-build)
-    :lein-figwheel (util/lapply 'lfig/cljs-repl)
+  "Starts a REPL connected to the address and port specified in the opts map."
+  [{:keys [address port]}]
+  (let [eval-chan (a/chan 32)
+        read-chan (a/chan 32)
+        ret-chan (a/chan 32)
+        input (PipedInputStream.)
+        output (PipedOutputStream. input)]
 
-    ;; This is pretty magic, could probably be less magic.
-    ;; The whole world of connecting REPLs to ClojureScript environments is pretty...
-    ;; Uh... yeah, it's interesting. I'm surprised I even got some of them working really.
-    (:node :browser)
-    (util/lapply 'cljs/repl
-                 (first (util/lapply (symbol (name env) "get-envs")
-                                     (:env-opts (first args)))))
+    ;; Connect to the remote prepl and place messages on read-chan.
+    (future
+      (with-open [input-reader (io/reader input)]
+        (server/remote-prepl
+          address port
+          input-reader
+          (fn [msg] (a/>!! read-chan msg))
+          :valf identity)
+        (println "conn quit")))
 
-    (do
-      (util/log "No REPL configured for env" env "falling back to regular Clojure JVM REPL.")
-      (clojure/main))))
+    ;; Read values from read-chan and either print them or write
+    ;; the return values to ret-chan.
+    (a/go-loop []
+      (when-let [{:keys [tag val] :as msg} (a/<! read-chan)]
+        (case tag
+          :out (do
+                 (print val)
+                 (flush))
+          :err (binding [*out* *err*] 
+                 (print val)
+                 (flush))
+          :tap (println "tap>" val)
+          :ret (a/>! ret-chan msg)
+          (util/log "Unrecognised prepl response:" (pr-str msg)))
+        (recur)))
+
+    ;; Read code from eval-chan and write it to the REPL.
+    (a/go
+      (with-open [output-writer (io/writer output)]
+        (loop []
+          (when-let [code (a/<! eval-chan)]
+            (write output-writer (str code "\n"))
+            (recur)))))
+
+    ;; Load REPL tooling functions.
+    ;; We fire Clojure and ClojureScript in the hope that one of them sticks.
+    ;; Errors are ignored. I would use reader conditionals but old Clojure
+    ;; prepl versions don't support them.
+    (a/>!! eval-chan "(use 'clojure.repl)")
+    (a/<!! ret-chan)
+    (a/>!! eval-chan "(use '[cljs.repl :only (doc source error->str)])")
+    (a/<!! ret-chan)
+
+    ;; TODO :repl/quit
+    (clojure/repl
+      :eval (fn [form]
+              (a/>!! eval-chan (pr-str form))
+              (a/<!! ret-chan))
+      :print (fn [{:keys [val exception]}]
+               (if exception
+                  (do
+                    (pprint/pprint (read-string val))
+                    (println (-> val (clojure/ex-triage) (clojure/err->msg))))
+                  (println val)))
+      :prompt (fn []
+                (a/>!! eval-chan ":prompt")
+                (print (str (:ns (a/<!! ret-chan)) "=> "))))
+
+    (println "repl quit")
+
+    (run! a/close! [eval-chan read-chan ret-chan])))

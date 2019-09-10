@@ -33,7 +33,7 @@
                                       (dissoc :extra))))))))
 
 (defn -main
-  "Allows you to easily start a single prepl then drop into a rebel-readline REPL."
+  "Allows you to easily start a single prepl then drop into a REPL."
   [& args]
   (let [{:keys [opts summary]} (parse-opts args)]
     (if (:help opts)
