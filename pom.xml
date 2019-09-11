@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>olical</groupId>
   <artifactId>propel</artifactId>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
   <name>propel</name>
   <description> Propel helps you start Clojure(Script) REPLs with a prepl.</description>
   <url>https://github.com/Olical/propel</url>
@@ -26,6 +26,11 @@
       <groupId>org.clojure</groupId>
       <artifactId>clojurescript</artifactId>
       <version>1.10.520</version>
+    </dependency>
+    <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>core.async</artifactId>
+      <version>0.4.500</version>
     </dependency>
     <dependency>
       <groupId>org.clojure</groupId>
