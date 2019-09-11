@@ -7,7 +7,6 @@ It consists of a simple command line interface (`propel.main`) as well as a coup
 ```bash
 $ clj --main propel.main --write-port-file
 [Propel] Started a :jvm prepl at 127.0.0.1:33979 (written to ".prepl-port")
-Clojure 1.10.1
 user=>
 
 # ---
@@ -30,10 +29,10 @@ You can install Propel from [Clojars][], just add the appropriate coordinate to 
 
 ```edn
 ;; deps.edn
-olical/propel {:mvn/version "1.1.0"}
+olical/propel {:mvn/version "1.2.0"}
 
 ;; project.clj
-[olical/propel "1.1.0"]
+[olical/propel "1.2.0"]
 ```
 
 ## Usage
@@ -47,24 +46,19 @@ As you can see from the help output above we can provide various `env` values, i
 ```bash
 $ clj -m propel.main --env node
 [Propel] Started a :node prepl at 127.0.0.1:45297
-ClojureScript 1.10.520
 cljs.user=> (defn hello [n] (str "Hello, " n "!"))
 #'cljs.user/hello
-cljs.user=>
 ```
 
-If we connect to the prepl via netcat we can execute the function defined at the terminal.
+We can also REPL into any existing prepl by specifying a `--port` (`-p`) and `--repl-only` (`-r`).
 
 ```bash
-$ nc localhost 45297
-(hello "Olical")
-{:tag :err, :val "WARNING: Use of undeclared Var cljs.user/hello at line 4 <cljs repl>\n"}
-{:tag :ret, :val "\"Hello, Olical!\"", :ns "cljs.user", :ms 15, :form "(hello \"Olical\")"}
+$ clj -m propel.main -rp 45297
+cljs.user=> (hello "Olical")
+"Hello Olical!"
 ```
 
-> We can safely ignore the warning, it's ClojureScript specific and something to do with the compiler context not being shared. So it _thinks_ that var doesn't exist but it does, if you execute `(declare hello)` the warning would go away, the code still works fine with the warning.
-
-You can specify a port or Propel can write the random port to a file, `.prepl-port` by default.
+You can specify a port or Propel can write the random port to a file, it will use `.prepl-port` by default.
 
 ```bash
 # Write to the default file.
@@ -89,10 +83,11 @@ $ clj -m propel.main --extra '{:port-file? true}'
  * `(propel.core/start-prepl! opts)`
  * `(propel.core/repl opts)`
 
-The command line maps directly to the `opts` argument of `start-prepl!`, you can give it an empty map and all of the defaults will be applied, just like the CLI. To start a node prepl via Clojure instead of the CLI just provide an `:env`.
+The command line maps near enough directly to the `opts` argument of `start-prepl!`, you can give it an empty map and all of the defaults will be applied, just like the CLI. To start a node prepl via Clojure instead of the CLI just provide an `:env`.
 
 ```clojure
-(propel.core/start-prepl! {:env :node})
+(propel.core/start-prepl! {:env :node, :port-file? true})
+(propel.core/start-prepl! {:port 5555})
 ```
 
 It will return the `opts` map enriched with all of the defaults, selected port, port file path, accept function symbol and more. It's up to you to decide what you want to do with that data.
@@ -104,18 +99,22 @@ You can then pass the result from `start-prepl!` through to `repl` which will st
 Here's a fairly exhaustive example of the options map, `start-prepl!` and `repl` usage.
 
 ```clojure
+;; Start a node prepl and REPL into it.
 (-> {:env :node
      :port 5555
      :port-file-name ".node-prepl-port"}
     (propel.core/start-prepl!)
     (propel.core/repl))
+
+;; Open a REPL into an exisisting prepl.
+(prope.core/repl {:port 8787, :repl-only? true})
 ```
 
 ### Figwheel
 
 #### Lein (legacy)
 
-For those of you still using the [lein-figwheel][] plugin, you may execute something like the following to have figwheel start up from your `project.clj` configuration. Everything should be inferred and should start up as if you typed `lein figwheel` but with a prepl connected.
+When using the [lein-figwheel][] plugin, you may execute something like the following to have figwheel start up from your `project.clj` configuration. Everything should be inferred and should start up as if you typed `lein figwheel` but with a prepl connected.
 
 ```bash
 $ clj -m propel.main -e lein-figwheel
