@@ -1,9 +1,21 @@
 (ns propel.util
   "Useful things that don't conceptually belong to one namespace."
+  (:require [clojure.main :as clojure]
+            [clojure.pprint :as pprint])
   (:import [java.net ServerSocket]))
 
 (defn log [& msg]
   (apply println "[Propel]" msg))
+
+(defn error [err & msg]
+  (binding [*out* *err*]
+    (apply log "Error:" msg)
+    (-> err
+        (cond-> (not (map? err)) (Throwable->map))
+        (doto (pprint/pprint))
+        (clojure/ex-triage)
+        (clojure/ex-str)
+        (println))))
 
 (defn die [& msg]
   (binding [*out* *err*]
@@ -37,3 +49,20 @@
   "Generates a unique prefixed name string with a label."
   [label]
   (str (gensym (str "propel-" label "-"))))
+
+(defmacro thread
+  "Useful helper to run code in a thread but ensure errors are caught and
+  logged correctly."
+  [use-case & body]
+  `(future
+     (try
+       ~@body
+       (catch Throwable t#
+         (error t# "From thread" (str "'" ~use-case "'"))))))
+
+(defn write
+  "Write the full data to the stream and then flush the stream."
+  [stream data]
+  (doto stream
+    (.write data 0 (count data))
+    (.flush)))

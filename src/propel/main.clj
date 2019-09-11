@@ -52,4 +52,5 @@
                        (when port-file?
                          (str " (written to \"" port-file-name "\")"))))
 
-        (propel/repl opts)))))
+        (propel/repl opts)
+        (shutdown-agents)))))

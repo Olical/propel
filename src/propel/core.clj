@@ -2,9 +2,9 @@
   "Tools to start prepl servers in various configurations."
   (:require [clojure.main :as clojure]
             [clojure.core.server :as server]
-            [clojure.pprint :as pprint]
             [clojure.java.io :as io]
             [clojure.core.async :as a]
+            [clojure.pprint :as pprint]
             [propel.spec :as spec]
             [propel.util :as util])
   (:import [java.io PipedInputStream PipedOutputStream]))
@@ -72,13 +72,6 @@
 
     opts))
 
-(defn- write
-  "Write the full data to the stream and then flush the stream."
-  [stream data]
-  (doto stream
-    (.write data 0 (count data))
-    (.flush)))
-
 (defn repl
   "Starts a REPL connected to the address and port specified in the opts map."
   [{:keys [address port]}]
@@ -88,64 +81,64 @@
         input (PipedInputStream.)
         output (PipedOutputStream. input)]
 
-    ;; Connect to the remote prepl and place messages on read-chan.
-    (future
+    (util/thread "remote prepl connection"
       (with-open [input-reader (io/reader input)]
         (server/remote-prepl
           address port
           input-reader
           (fn [msg] (a/>!! read-chan msg))
-          :valf identity)
-        (println "conn quit")))
+          :valf identity)))
 
-    ;; Read values from read-chan and either print them or write
-    ;; the return values to ret-chan.
-    (a/go-loop []
-      (when-let [{:keys [tag val] :as msg} (a/<! read-chan)]
-        (case tag
-          :out (do
-                 (print val)
-                 (flush))
-          :err (binding [*out* *err*] 
-                 (print val)
-                 (flush))
-          :tap (println "tap>" val)
-          :ret (a/>! ret-chan msg)
-          (util/log "Unrecognised prepl response:" (pr-str msg)))
-        (recur)))
+    (util/thread "read loop"
+      (loop []
+        (when-let [{:keys [tag val] :as msg} (a/<!! read-chan)]
+          (case tag
+            :out (do
+                   (print val)
+                   (flush))
+            :err (binding [*out* *err*] 
+                   (print val)
+                   (flush))
+            :tap (try
+                   (pprint/pprint (read-string val))
+                   (catch Throwable _t
+                     (println val)))
+            :ret (a/>!! ret-chan msg)
+            (util/log "Unrecognised prepl response:" (pr-str msg)))
+          (recur))))
 
-    ;; Read code from eval-chan and write it to the REPL.
-    (a/go
+    (util/thread "eval loop"
       (with-open [output-writer (io/writer output)]
         (loop []
-          (when-let [code (a/<! eval-chan)]
-            (write output-writer (str code "\n"))
+          (when-let [code (a/<!! eval-chan)]
+            (util/write output-writer (str code "\n"))
             (recur)))))
 
     ;; Load REPL tooling functions.
     ;; We fire Clojure and ClojureScript in the hope that one of them sticks.
     ;; Errors are ignored. I would use reader conditionals but old Clojure
     ;; prepl versions don't support them.
-    (a/>!! eval-chan "(use 'clojure.repl)")
-    (a/<!! ret-chan)
-    (a/>!! eval-chan "(use '[cljs.repl :only (doc source error->str)])")
-    (a/<!! ret-chan)
+    (doseq [code ["(use 'clojure.repl)"
+                  "(use '[cljs.repl :only (doc source error->str)])"]]
+      (a/>!! eval-chan code)
+      (a/<!! ret-chan))
 
-    ;; TODO :repl/quit
     (clojure/repl
       :eval (fn [form]
               (a/>!! eval-chan (pr-str form))
               (a/<!! ret-chan))
       :print (fn [{:keys [val exception]}]
                (if exception
-                  (do
-                    (pprint/pprint (read-string val))
-                    (println (-> val (clojure/ex-triage) (clojure/err->msg))))
-                  (println val)))
+                 (util/error (read-string val) "From remote prepl eval")
+                 (println val)))
       :prompt (fn []
                 (a/>!! eval-chan ":prompt")
                 (print (str (:ns (a/<!! ret-chan)) "=> "))))
 
-    (println "repl quit")
+    ;; Known issue: If you send :repl/quit the prepl will exit but the local
+    ;; REPL will continue to loop. Not super important so I'll leave it for now.
 
+    ;; Ensure the remote prepl exits properly if the user sends EOF
+    ;; to their local REPL.
+    (a/>!! eval-chan ":repl/quit")
     (run! a/close! [eval-chan read-chan ret-chan])))
