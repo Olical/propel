@@ -107,7 +107,7 @@ Here's a fairly exhaustive example of the options map, `start-prepl!` and `repl`
     (propel.core/repl))
 
 ;; Open a REPL into an exisisting prepl.
-(prope.core/repl {:port 8787, :repl-only? true})
+(prope.core/repl {:port 8787})
 ```
 
 ### Figwheel
