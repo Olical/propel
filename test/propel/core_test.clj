@@ -27,9 +27,9 @@
                               #{:port-file-name :port-file?}))))
 
       (t/testing "node and browser set args"
-        (t/is (= [{:env-opts {:server-name "foo", :port 5555}}]
+        (t/is (= [{:env-opts {:port 5555}}]
                  (:args (f {:env :node}))))
-        (t/is (= [{:env-opts {:server-name "foo", :port 5555}}]
+        (t/is (= [{:env-opts {:port 5555}}]
                  (:args (f {:env :browser})))))
 
       (t/testing "accept symbol appears appropriate"
