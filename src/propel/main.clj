@@ -16,6 +16,7 @@
    ["-w" "--[no-]write-port-file" "Write the port file? Use of --port-file-name implies true, defaults to false"]
    ["-e" "--env ENV" "What REPL to start ([jvm], node, browser, figwheel, lein-figwheel, rhino, graaljs or nashorn)"
     :parse-fn (fn [s] (-> s (str/replace #"^:" "") (str/lower-case) (keyword)))]
+   ["-r" "--repl-only" "Don't start a prepl, only start a local REPL and connect it to the prepl at the specified port and address."]
    ["-b" "--figwheel-build BUILD" "Build to use when using the figwheel env (not lein-fighweel), defaults to propel"]
    ["-x" "--extra EDN" "Extra options map you want merged in, you can get creative with this one"]
    ["-h" "--help" "Print this help"]])
@@ -27,7 +28,8 @@
       (set/rename-keys {:options :opts})
       (update :opts (fn [{:keys [extra] :as opts}]
                       (-> opts
-                          (set/rename-keys {:write-port-file :port-file?})
+                          (set/rename-keys {:write-port-file :port-file?
+                                            :repl-only :repl-only?})
                           (cond->
                             extra (-> (merge (edn/read-string extra))
                                       (dissoc :extra))))))))
@@ -35,22 +37,26 @@
 (defn -main
   "Allows you to easily start a single prepl then drop into a REPL."
   [& args]
-  (let [{:keys [opts summary]} (parse-opts args)]
-    (if (:help opts)
+  (let [{:keys [opts summary]} (parse-opts args)
+        {:keys [help repl-only?]} opts]
+    (if help
       (println summary)
       (let [{:keys [address env port port-file? port-file-name] :as opts}
             (try
-              (propel/start-prepl! opts)
+              (if repl-only?
+                opts
+                (propel/start-prepl! opts))
               (catch IllegalArgumentException e
                 (let [cause (.getCause e)]
                   (util/die
                     (str (.getMessage cause) "\n\n")
                     (:human (ex-data cause))))))]
 
-        (util/log "Started a" env "prepl at"
-                  (str address ":" port
-                       (when port-file?
-                         (str " (written to \"" port-file-name "\")"))))
+        (when-not repl-only?
+          (util/log "Started a" env "prepl at"
+                    (str address ":" port
+                         (when port-file?
+                           (str " (written to \"" port-file-name "\")")))))
 
         (propel/repl opts)
         (shutdown-agents)))))
