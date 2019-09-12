@@ -5,6 +5,7 @@
             [clojure.java.io :as io]
             [clojure.core.async :as a]
             [clojure.pprint :as pprint]
+            [clojure.tools.reader :as tr]
             [propel.spec :as spec]
             [propel.util :as util])
   (:import [java.io PipedInputStream PipedOutputStream]))
@@ -124,6 +125,14 @@
       (a/<!! ret-chan))
 
     (clojure/repl
+      :read (fn [request-prompt request-exit]
+              (or ({:line-start request-prompt :stream-end request-exit}
+                   (clojure/skip-whitespace *in*))
+                  (let [input (binding [tr/*default-data-reader-fn* tagged-literal
+                                        tr/*alias-map* (constantly 'user)]
+                                (tr/read {:read-cond :preserve} *in*))]
+                    (clojure/skip-if-eol *in*)
+                    input)))
       :eval (fn [form]
               (a/>!! eval-chan (pr-str form))
               (a/<!! ret-chan))
