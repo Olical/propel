@@ -94,8 +94,6 @@ It will return the `opts` map enriched with all of the defaults, selected port, 
 
 You can then pass the result from `start-prepl!` through to `repl` which will start a standard REPL attached to the prepl you just created. This is what `propel.main` does for you, starts a prepl then a REPL using the returned data.
 
-> Only jvm, node, browser and figwheel will connect the stdio REPL to the prepl environment. The other ClojureScript environments will just start a regular Clojure JVM REPL. Some of the prepl environments are tricky (or impossible) to hook up without patching ClojureScript so I only implemented it for the most useful environments.
-
 Here's a fairly exhaustive example of the options map, `start-prepl!` and `repl` usage.
 
 ```clojure
