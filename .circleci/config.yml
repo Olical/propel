@@ -39,7 +39,7 @@ jobs:
           cache-key: test-{{ checksum "deps.edn" }}
           steps:
             - run: >
-                bin/kaocha
+                script/kaocha
                 --plugin kaocha.plugin/junit-xml
                 --junit-xml-file test-results/kaocha/results.xml
                 --plugin cloverage --no-cov-html --codecov
