@@ -74,6 +74,14 @@
 
     opts))
 
+(defn stop-prepl!
+  "Stop a prepl server."
+  [{:keys [name port-file? port-file-name] :as _opts}]
+  (when port-file?
+    (io/delete-file port-file-name true))
+  (server/stop-server name)
+  nil)
+
 (defn repl
   "Starts a REPL connected to the address and port specified in the opts map."
   [{:keys [address port]}]

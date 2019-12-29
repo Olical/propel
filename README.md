@@ -58,7 +58,7 @@ cljs.user=> (hello "Olical")
 "Hello Olical!"
 ```
 
-You can specify a port or Propel can write the random port to a file, it will use `.prepl-port` by default.
+You can specify a port or Propel can write the random port to a file, it will use `.prepl-port` by default. The port file will be deleted when the prepl is stopped.
 
 ```bash
 # Write to the default file.
@@ -78,9 +78,10 @@ $ clj -m propel.main --extra '{:port-file? true}'
 
 ### Functions
 
-`propel.core` exposes two functions:
+`propel.core` exposes three functions:
 
  * `(propel.core/start-prepl! opts)`
+ * `(propel.core/stop-prepl! opts-from-start-prepl)`
  * `(propel.core/repl opts)`
 
 The command line maps near enough directly to the `opts` argument of `start-prepl!`, you can give it an empty map and all of the defaults will be applied, just like the CLI. To start a node prepl via Clojure instead of the CLI just provide an `:env`.
@@ -106,6 +107,13 @@ Here's a fairly exhaustive example of the options map, `start-prepl!` and `repl`
 
 ;; Open a REPL into an exisisting prepl.
 (propel.core/repl {:port 8787})
+
+;; Capture the opts of a prepl so you can stop it.
+;; We're relying on all of the default random values.
+(let [opts (propel.core/start-prepl! {})]
+  ;; Do some things with the prepl...
+  ;; And then stop it.
+  (propel.core/stop-prepl! opts))
 ```
 
 ### Figwheel
