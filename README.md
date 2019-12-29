@@ -112,6 +112,8 @@ Here's a fairly exhaustive example of the options map, `start-prepl!` and `repl`
 
 #### Lein (legacy)
 
+> You need to add `figwheel-sidecar` to your dependencies to use this! Version `0.5.19` was the latest at the time of writing.
+
 When using the [lein-figwheel][] plugin, you may execute something like the following to have figwheel start up from your `project.clj` configuration. Everything should be inferred and should start up as if you typed `lein figwheel` but with a prepl connected.
 
 ```bash
@@ -119,6 +121,8 @@ $ clj -m propel.main -e lein-figwheel
 ```
 
 #### Main
+
+> You need to add `com.bhauman/figwheel-main` to your dependencies to use this! Version `0.2.3` was the latest at the time of writing.
 
 You can start a [figwheel][] prepl and REPL just like any other environment through the functions or CLI. The only thing you have to bear in mind is that figwheel-main requires you to create a configuration file, I highly recommend you have a read through the documentation.
 
