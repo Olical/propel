@@ -54,7 +54,8 @@
     (spec/validate! ::spec/opts opts "Failed to start-prepl, internal configuration error.")
 
     (when port-file?
-      (spit port-file-name (:port opts)))
+      (spit port-file-name (:port opts))
+      (.addShutdownHook (Runtime/getRuntime) (Thread. #(io/delete-file port-file-name true))))
 
     (when (= env :figwheel)
       (util/lapply 'fig/start figwheel-opts figwheel-build))
