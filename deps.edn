@@ -2,17 +2,17 @@
 
  :deps
  {org.clojure/clojure {:mvn/version "1.10.1"}
-  org.clojure/clojurescript {:mvn/version "1.10.520"}
-  org.clojure/core.async {:mvn/version "0.4.500"}
+  org.clojure/clojurescript {:mvn/version "1.10.597"}
+  org.clojure/core.async {:mvn/version "0.6.532"}
   org.clojure/spec.alpha {:mvn/version "0.2.176"}
   org.clojure/tools.cli {:mvn/version "0.4.2"}
   org.clojure/tools.reader {:mvn/version "1.3.2"}
   com.bhauman/figwheel-main {:mvn/version "0.2.3"}
-  figwheel-sidecar {:mvn/version "0.5.18"}
-  expound {:mvn/version "0.7.2"}}
+  figwheel-sidecar {:mvn/version "0.5.19"}
+  expound {:mvn/version "0.8.2"}}
 
  :aliases
  {:dev {:extra-paths ["test/cljs" "target"]}
-  :test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-529"}
+  :test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-565"}
                       lambdaisland/kaocha-junit-xml {:mvn/version "0.0-70"}
-                      lambdaisland/kaocha-cloverage {:mvn/version "0.0-32"}}}}}
+                      lambdaisland/kaocha-cloverage {:mvn/version "0.0-41"}}}}}
